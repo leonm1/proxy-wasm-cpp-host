@@ -259,6 +259,11 @@ void NullPlugin::getFunction(std::string_view function_name, WasmCallWord<3> *f)
   }
 }
 
+void NullPlugin::getFunction(std::string_view function_name, WasmCall_ll *f) {
+  error("Unexpected getFunction for testing signature WasmCall_ll: " + std::string(function_name));
+  *f = nullptr;
+}
+
 void NullPlugin::getFunction(std::string_view function_name, WasmCall_lf *f) {
   error("Unexpected getFunction for testing signature WasmCall_lf: " + std::string(function_name));
   *f = nullptr;

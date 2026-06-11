@@ -218,6 +218,7 @@ cc_test(
     srcs = ["wasm_vm_test.cc"],
     data = [
         "//test/test_data:abi_export.wasm",
+        "//test/test_data:arg_passing.wasm",
     ],
     linkstatic = 1,
     deps = [

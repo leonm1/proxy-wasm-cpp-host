@@ -182,6 +182,40 @@ void BM_WarmVmStart(benchmark::State &state, auto makeVm) {
   }
 }
 
+void BM_PassU32(benchmark::State &state, auto makeVm) {
+  auto source = readTestWasmFile("arg_passing.wasm");
+  ASSERT_FALSE(source.empty());
+  auto wasm = TestWasm(makeVm());
+  auto *host = dynamic_cast<TestIntegration *>(wasm.wasm_vm()->integration().get());
+  host->setLogLevel(LogLevel::info);
+  ASSERT_TRUE(wasm.load(source, false));
+  ASSERT_TRUE(wasm.initialize());
+  WasmCallWord<1> pass_u32;
+  wasm.wasm_vm()->getFunction("test_pass_u32", &pass_u32);
+  ASSERT_NE(pass_u32, nullptr);
+
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(pass_u32(nullptr, 12345678));
+  }
+}
+
+void BM_PassU64(benchmark::State &state, auto makeVm) {
+  auto source = readTestWasmFile("arg_passing.wasm");
+  ASSERT_FALSE(source.empty());
+  auto wasm = TestWasm(makeVm());
+  auto *host = dynamic_cast<TestIntegration *>(wasm.wasm_vm()->integration().get());
+  host->setLogLevel(LogLevel::info);
+  ASSERT_TRUE(wasm.load(source, false));
+  ASSERT_TRUE(wasm.initialize());
+  WasmCall_ll pass_u64;
+  wasm.wasm_vm()->getFunction("test_pass_u64", &pass_u64);
+  ASSERT_NE(pass_u64, nullptr);
+
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(pass_u64(nullptr, 14294967295));
+  }
+}
+
 TEST(TestVm, Benchmarks) {
 #if defined(THREAD_SANITIZER) || defined(MEMORY_SANITIZER) || defined(ADDRESS_SANITIZER) ||        \
     defined(HWADDRESS_SANITIZER) || defined(THREAD_SANITIZER)
@@ -191,6 +225,18 @@ TEST(TestVm, Benchmarks) {
     benchmark::RegisterBenchmark(
         "BM_WarmVmStart/" + engine,
         [](benchmark::State &state, auto makeVm) { BM_WarmVmStart(state, makeVm); },
+        [engine]() { return TestVm::makeVm(engine); });
+  }
+  for (std::string engine : getWasmEngines()) {
+    benchmark::RegisterBenchmark(
+        "BM_PassU32/" + engine,
+        [](benchmark::State &state, auto makeVm) { BM_PassU32(state, makeVm); },
+        [engine]() { return TestVm::makeVm(engine); });
+  }
+  for (std::string engine : getWasmEngines()) {
+    benchmark::RegisterBenchmark(
+        "BM_PassU64/" + engine,
+        [](benchmark::State &state, auto makeVm) { BM_PassU64(state, makeVm); },
         [engine]() { return TestVm::makeVm(engine); });
   }
   benchmark::RunSpecifiedBenchmarks();

@@ -90,6 +90,7 @@ using WasmCallWord = std::function<WasmCallInFuncType<N, Word, ContextBase *, Wo
 using WasmCall_WWlfd = std::function<Word(ContextBase *, Word, uint64_t, float, double)>;
 // Types used to test return values. Floats are passed as parameters as these
 // do not conflict with ProxyWasm ABI signatures.
+using WasmCall_ll = std::function<uint64_t(ContextBase *, uint64_t)>;
 using WasmCall_lf = std::function<uint64_t(ContextBase *, float)>;
 using WasmCall_fff = std::function<float(ContextBase *, float, float)>;
 using WasmCall_dfff = std::function<double(ContextBase *, float, float, float)>;
@@ -99,8 +100,9 @@ using WasmCall_dfff = std::function<double(ContextBase *, float, float, float)>;
       _f(proxy_wasm::WasmCallVoid<3>) _f(proxy_wasm::WasmCallVoid<5>)                              \
           _f(proxy_wasm::WasmCallWord<0>) _f(proxy_wasm::WasmCallWord<1>)                          \
               _f(proxy_wasm::WasmCallWord<2>) _f(proxy_wasm::WasmCallWord<3>)                      \
-                  _f(proxy_wasm::WasmCall_WWlfd) _f(proxy_wasm::WasmCall_lf)                       \
-                      _f(proxy_wasm::WasmCall_fff) _f(proxy_wasm::WasmCall_dfff)
+                  _f(proxy_wasm::WasmCall_WWlfd) _f(proxy_wasm::WasmCall_ll)                       \
+                      _f(proxy_wasm::WasmCall_lf) _f(proxy_wasm::WasmCall_fff)                     \
+                          _f(proxy_wasm::WasmCall_dfff)
 
 // These are templates and its helper for constructing signatures of functions callbacks from Wasm
 // VMs.
