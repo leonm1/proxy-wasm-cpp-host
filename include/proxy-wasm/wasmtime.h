@@ -44,7 +44,7 @@ struct WasmtimeEngineOptions {
   WasmtimeCompiler compiler = WasmtimeCompiler::kWinch;
   WasmtimeOptLevel opt_level = WasmtimeOptLevel::kNone;
 
-  bool operator==(const WasmtimeEngineOptions& rhs) const = default;
+  bool operator==(const WasmtimeEngineOptions &rhs) const = default;
 };
 
 struct WasmtimeOptions {
