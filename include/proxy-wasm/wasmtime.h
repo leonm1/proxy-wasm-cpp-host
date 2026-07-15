@@ -41,7 +41,7 @@ enum class WasmtimeOptLevel {
 
 // Options to configure the wasmtime engine.
 struct WasmtimeEngineOptions {
-  WasmtimeCompiler compiler = WasmtimeCompiler::kWinch;
+  WasmtimeCompiler compiler = WasmtimeCompiler::kCranelift;
   WasmtimeOptLevel opt_level = WasmtimeOptLevel::kNone;
 
   bool operator==(const WasmtimeEngineOptions &rhs) const = default;
