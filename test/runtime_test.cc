@@ -215,6 +215,10 @@ TEST_P(TestVm, WasmtimeCompilerOption) {
   if (engine_ != "wasmtime") {
     return;
   }
+#ifdef __s390x__
+  // s390x does not currently support Winch.
+  return;
+#endif
   auto cranelift_vm =
       createWasmtimeVm({.engine_options = {.compiler = WasmtimeCompiler::kCranelift}});
   cranelift_vm->integration() = std::make_unique<TestIntegration>();
