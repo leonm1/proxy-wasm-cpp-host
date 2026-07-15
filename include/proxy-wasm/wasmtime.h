@@ -30,9 +30,26 @@ enum class WasmtimeCompiler {
   kWinch,
 };
 
+enum class WasmtimeOptLevel {
+  // Turns off most optimizations (default).
+  kNone,
+  // Generates the fastest possible code.
+  kSpeed,
+  // Like speed, but also performs passes to optimize the size of the generated binary.
+  kSpeedAndSize,
+};
+
+// Options to configure the wasmtime engine.
+struct WasmtimeEngineOptions {
+  WasmtimeCompiler compiler = WasmtimeCompiler::kWinch;
+  WasmtimeOptLevel opt_level = WasmtimeOptLevel::kNone;
+
+  bool operator==(const WasmtimeEngineOptions& rhs) const = default;
+};
+
 struct WasmtimeOptions {
   uint64_t max_wasm_memory_size_bytes = PROXY_WASM_HOST_MAX_WASM_MEMORY_SIZE_BYTES;
-  WasmtimeCompiler compiler = WasmtimeCompiler::kWinch;
+  WasmtimeEngineOptions engine_options = {};
 };
 
 std::unique_ptr<WasmVm> createWasmtimeVm(WasmtimeOptions options = {});
