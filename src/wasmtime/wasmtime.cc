@@ -26,6 +26,7 @@
 #include "include/proxy-wasm/word.h"
 #include "include/proxy-wasm/bytecode_util.h"
 
+#include "absl/base/no_destructor.h"
 #include "crates/c-api/include/wasmtime.h"  // IWYU pragma: keep
 #include "crates/c-api/include/wasmtime.hh" // IWYU pragma: keep
 
@@ -60,17 +61,17 @@ using ::wasmtime::Table;
 using ::wasmtime::TrapResult;
 
 struct EngineWithOpts {
-  Engine *engine;
+  std::unique_ptr<Engine> engine;
   WasmtimeEngineOptions options;
 };
 
 Engine *engine(WasmtimeEngineOptions &options) {
-  static std::mutex engines_mutex;
-  std::lock_guard<std::mutex> guard(engines_mutex);
-  static std::vector<EngineWithOpts> engines;
-  for (const auto &engine_with_opts : engines) {
+  static absl::NoDestructor<std::mutex> engines_mutex;
+  std::lock_guard<std::mutex> guard(*engines_mutex);
+  static absl::NoDestructor<std::vector<EngineWithOpts>> engines;
+  for (auto &engine_with_opts : *engines) {
     if (engine_with_opts.options == options) {
-      return engine_with_opts.engine;
+      return engine_with_opts.engine.get();
     }
   }
   Config config;
@@ -88,9 +89,8 @@ Engine *engine(WasmtimeEngineOptions &options) {
     config.cranelift_opt_level(::wasmtime::OptLevel::SpeedAndSize);
     break;
   }
-  Engine *engine = new Engine(std::move(config));
-  engines.push_back({.engine = engine, .options = options});
-  return engine;
+  engines->emplace_back(std::make_unique<Engine>(std::move(config)), options);
+  return engines->back().engine.get();
 }
 
 template <typename T> std::string printValue(const T &value) { return std::to_string(value); }
