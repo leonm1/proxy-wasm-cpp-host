@@ -60,37 +60,24 @@ using ::wasmtime::Store;
 using ::wasmtime::Table;
 using ::wasmtime::TrapResult;
 
-struct EngineWithOpts {
-  std::unique_ptr<Engine> engine;
-  WasmtimeEngineOptions options;
-};
-
-Engine *engine(WasmtimeEngineOptions &options) {
+Engine *engine(WasmtimeOptions &options) {
   static absl::NoDestructor<std::mutex> engines_mutex;
   std::lock_guard<std::mutex> guard(*engines_mutex);
-  static absl::NoDestructor<std::vector<EngineWithOpts>> engines;
-  for (auto &engine_with_opts : *engines) {
-    if (engine_with_opts.options == options) {
-      return engine_with_opts.engine.get();
-    }
+  static absl::NoDestructor<std::unordered_map<WasmtimeCompiler, std::unique_ptr<Engine>>> engines;
+  std::unique_ptr<Engine> &engine = (*engines)[options.compiler];
+  if (engine != nullptr) {
+    return engine.get();
   }
   Config config;
   config.epoch_interruption(true);
-  config.strategy(options.compiler == WasmtimeCompiler::kCranelift ? ::wasmtime::Strategy::Cranelift
-                                                                   : ::wasmtime::Strategy::Winch);
-  switch (options.opt_level) {
-  case WasmtimeOptLevel::kNone:
-    config.cranelift_opt_level(::wasmtime::OptLevel::None);
-    break;
-  case WasmtimeOptLevel::kSpeed:
-    config.cranelift_opt_level(::wasmtime::OptLevel::Speed);
-    break;
-  case WasmtimeOptLevel::kSpeedAndSize:
+  if (options.compiler == WasmtimeCompiler::kCranelift) {
+    config.strategy(::wasmtime::Strategy::Cranelift);
     config.cranelift_opt_level(::wasmtime::OptLevel::SpeedAndSize);
-    break;
+  } else {
+    config.strategy(::wasmtime::Strategy::Winch);
   }
-  engines->emplace_back(std::make_unique<Engine>(std::move(config)), options);
-  return engines->back().engine.get();
+  engine = std::make_unique<Engine>(std::move(config));
+  return engine.get();
 }
 
 template <typename T> std::string printValue(const T &value) { return std::to_string(value); }
@@ -121,7 +108,7 @@ void InPlaceConvertHostToWasmEndianness(auto &...args) {
 class Wasmtime : public WasmVm {
 public:
   Wasmtime(WasmtimeOptions options)
-      : options_(std::move(options)), engine_(engine(options_.engine_options)), linker_(*engine_) {}
+      : options_(std::move(options)), engine_(engine(options_)), linker_(*engine_) {}
 
   std::string_view getEngineName() override { return "wasmtime"; }
   Cloneable cloneable() override { return Cloneable::CompiledBytecode; }

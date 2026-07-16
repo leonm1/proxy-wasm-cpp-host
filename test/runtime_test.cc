@@ -219,10 +219,9 @@ TEST_P(TestVm, WasmtimeCompilerOption) {
   // s390x does not currently support Winch.
   return;
 #endif
-  auto cranelift_vm =
-      createWasmtimeVm({.engine_options = {.compiler = WasmtimeCompiler::kCranelift}});
+  auto cranelift_vm = createWasmtimeVm({.compiler = WasmtimeCompiler::kCranelift});
   cranelift_vm->integration() = std::make_unique<TestIntegration>();
-  auto winch_vm = createWasmtimeVm({.engine_options = {.compiler = WasmtimeCompiler::kWinch}});
+  auto winch_vm = createWasmtimeVm({.compiler = WasmtimeCompiler::kWinch});
   winch_vm->integration() = std::make_unique<TestIntegration>();
   auto source = readTestWasmFile("clock.wasm");
   ASSERT_FALSE(source.empty());
@@ -239,30 +238,6 @@ TEST_P(TestVm, WasmtimeCompilerOption) {
   std::chrono::duration cranelift_load_time = t2 - t1;
   // Winch should be significantly faster the load than cranelift.
   EXPECT_LT(winch_load_time, cranelift_load_time);
-}
-
-TEST_P(TestVm, WasmtimeOptLevelOption) {
-  if (engine_ != "wasmtime") {
-    return;
-  }
-  auto none_vm = createWasmtimeVm({.engine_options = {.compiler = WasmtimeCompiler::kCranelift,
-                                                      .opt_level = WasmtimeOptLevel::kNone}});
-  none_vm->integration() = std::make_unique<TestIntegration>();
-  auto opt_vm =
-      createWasmtimeVm({.engine_options = {.compiler = WasmtimeCompiler::kCranelift,
-                                           .opt_level = WasmtimeOptLevel::kSpeedAndSize}});
-  opt_vm->integration() = std::make_unique<TestIntegration>();
-  auto source = readTestWasmFile("clock.wasm");
-  ASSERT_FALSE(source.empty());
-  auto none_wasm = TestWasm(std::move(none_vm));
-  auto opt_wasm = TestWasm(std::move(opt_vm));
-
-  ASSERT_TRUE(none_wasm.load(source, false));
-  ASSERT_TRUE(opt_wasm.load(source, false));
-
-  std::optional<std::string> none_binary = none_wasm.wasm_vm()->serialize(source);
-  std::optional<std::string> opt_binary = opt_wasm.wasm_vm()->serialize(source);
-  EXPECT_LT(opt_binary->size(), none_binary->size());
 }
 #endif
 
