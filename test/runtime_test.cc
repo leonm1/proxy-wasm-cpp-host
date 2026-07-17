@@ -215,12 +215,12 @@ TEST_P(TestVm, WasmtimeCompilerOption) {
   if (engine_ != "wasmtime") {
     return;
   }
+  auto cranelift_vm = createWasmtimeVm({.compiler = WasmtimeCompiler::kCranelift});
+  cranelift_vm->integration() = std::make_unique<TestIntegration>();
 #ifdef __s390x__
   // s390x does not currently support Winch.
   return;
 #endif
-  auto cranelift_vm = createWasmtimeVm({.compiler = WasmtimeCompiler::kCranelift});
-  cranelift_vm->integration() = std::make_unique<TestIntegration>();
   auto winch_vm = createWasmtimeVm({.compiler = WasmtimeCompiler::kWinch});
   winch_vm->integration() = std::make_unique<TestIntegration>();
   auto source = readTestWasmFile("clock.wasm");
@@ -236,8 +236,8 @@ TEST_P(TestVm, WasmtimeCompilerOption) {
 
   std::chrono::duration winch_load_time = t3 - t2;
   std::chrono::duration cranelift_load_time = t2 - t1;
-  // Winch should be significantly faster the load than cranelift.
-  EXPECT_LT(winch_load_time, cranelift_load_time);
+  // Winch should be significantly (5x) faster to load than cranelift.
+  EXPECT_LT(winch_load_time * 3, cranelift_load_time);
 }
 #endif
 
